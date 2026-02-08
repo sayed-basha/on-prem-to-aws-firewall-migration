@@ -1,0 +1,43 @@
+{
+  "Comment": "Fedora Firewall to AWS Security Group Migration",
+  "StartAt": "CreateSecurityGroup",
+  "States": {
+    "CreateSecurityGroup": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "create_security_group",
+        "Payload.$": "$"
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "States.TaskFailed"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 2,
+          "BackoffRate": 1.5
+        }
+      ],
+      "ResultSelector": {
+        "securityGroupId.$": "$.Payload.securityGroupId",
+        "securityGroupName.$": "$.Payload.securityGroupName",
+        "rulesAdded.$": "$.Payload.rulesAdded",
+        "vpcId.$": "$.Payload.vpcId"
+      },
+      "ResultPath": "$.createResult",
+      "Next": "ValidateMigration"
+    },
+    "ValidateMigration": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "validate-migration",
+        "Payload": {
+          "securityGroupId.$": "$.createResult.securityGroupId"
+        }
+      },
+      "End": true
+    }
+  }
+}
