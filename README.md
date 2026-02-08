@@ -17,39 +17,13 @@ This project automates the migration of firewall rules from on-premises servers 
 
 ##  Architecture
 
-┌─────────────────────┐
-│      Server         │
-│   (On-Premises)     │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│ Extract Firewall    │
-│ Rules Script        │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│ firewall_rules.json │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│ AWS Step Functions  │
-└──────────┬──────────┘
-           │
-           ├──────────────────────┐
-           ▼                      ▼
-┌──────────────────┐   ┌──────────────────┐
-│ Lambda: Create   │   │ Lambda: Validate │
-│ Security Group   │   │ Migration        │
-└──────────────────┘   └──────────────────┘
-           │
-           ▼
-┌─────────────────────┐
-│ AWS Security Group  │
-│ (with rules)        │
-└─────────────────────┘
+graph TD
+    A[Server On-Premises] --> B[Extract Firewall Rules Script]
+    B --> C[firewall_rules.json]
+    C --> D[AWS Step Functions]
+    D --> E[Lambda: Create Security Group]
+    D --> F[Lambda: Validate Migration]
+    E --> G[AWS Security Group with rules]
 
 
 ##  Prerequisites
