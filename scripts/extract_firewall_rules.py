@@ -4,7 +4,7 @@ import json
 import os
 import pwd
 import re
-import ipaddress  # For CIDR normalization
+import ipaddress
 
 def normalize_cidr(cidr_str):
     """Normalize CIDR to proper network address"""
@@ -12,14 +12,15 @@ def normalize_cidr(cidr_str):
         network = ipaddress.ip_network(cidr_str, strict=False)
         return str(network)
     except Exception as e:
-        print(f"Warning: Could not normalize CIDR '{cidr_str}': {e}")
-        return cidr_str  # Return as-is if can't normalize
+        print(f" Warning: Could not normalize CIDR '{cidr_str}': {e}")
+        return cidr_str
 
 def parse_rich_rule(rich_rule):
     """Parse firewalld rich rule to extract port, protocol, and source"""
     
     result = {
         'port': None,
+        'port_range': None,
         'protocol': None,
         'source': '0.0.0.0/0',
         'action': 'accept'
@@ -29,13 +30,25 @@ def parse_rich_rule(rich_rule):
     source_match = re.search(r'source address="([^"]+)"', rich_rule)
     if source_match:
         raw_cidr = source_match.group(1)
-        result['source'] = normalize_cidr(raw_cidr)  # ← Normalize here
-        result['original_source'] = raw_cidr  # Keep original for description
+        result['source'] = normalize_cidr(raw_cidr)
+        result['original_source'] = raw_cidr
     
-    # Extract port
-    port_match = re.search(r'port port="(\d+)"', rich_rule)
+    # Extract port (single port or range)
+    port_match = re.search(r'port port="([^"]+)"', rich_rule)
     if port_match:
-        result['port'] = int(port_match.group(1))
+        port_value = port_match.group(1)
+        
+        # Check if it it range (e.g., "10-16000")
+        if '-' in port_value:
+            from_port, to_port = port_value.split('-')
+            result['port_range'] = {
+                'from': int(from_port),
+                'to': int(to_port)
+            }
+            print(f"  Detected port range: {from_port}-{to_port}")
+        else:
+            
+            result['port'] = int(port_value)
     
     # Extract protocol
     protocol_match = re.search(r'protocol="([^"]+)"', rich_rule)
@@ -78,41 +91,68 @@ def get_firewall_rules():
         'ssh': {'port': 22, 'protocol': 'tcp'}
     }
     
-    # Track ports handled by rich rules
+    
     rich_rule_ports = set()
     
-    # Add rich rules FIRST
+    
     for rich_rule in rich_rules:
         parsed = parse_rich_rule(rich_rule)
         
-        if parsed['port'] and parsed['protocol'] and parsed['action'] == 'accept':
-            rich_rule_ports.add((parsed['port'], parsed['protocol']))
-            
-            # Use normalized CIDR for both IP and description
+        if parsed['protocol'] and parsed['action'] == 'accept':
             normalized_cidr = parsed['source']
             
-            rules['security_group_rules'].append({
-                'IpProtocol': parsed['protocol'],
-                'FromPort': parsed['port'],
-                'ToPort': parsed['port'],
-                'IpRanges': [{
-                    'CidrIp': normalized_cidr,  # ← Normalized CIDR
-                    'Description': f'Rich rule: {parsed["protocol"]}/{parsed["port"]} from {normalized_cidr}'
-                }]
-            })
+            # Handle port range
+            if parsed['port_range']:
+                from_port = parsed['port_range']['from']
+                to_port = parsed['port_range']['to']
+                
+                # Track as range
+                rich_rule_ports.add((f"{from_port}-{to_port}", parsed['protocol']))
+                
+                rules['security_group_rules'].append({
+                    'IpProtocol': parsed['protocol'],
+                    'FromPort': from_port,
+                    'ToPort': to_port,
+                    'IpRanges': [{
+                        'CidrIp': normalized_cidr,
+                        'Description': f'Rich rule: {parsed["protocol"]}/{from_port}-{to_port} from {normalized_cidr}'
+                    }]
+                })
+                
+                print(f" Added port range rule: {from_port}-{to_port} from {normalized_cidr}")
             
-            # Show what was normalized if different
+            # Handle single port
+            elif parsed['port']:
+                port = parsed['port']
+                
+                # Track as single port
+                rich_rule_ports.add((port, parsed['protocol']))
+                
+                rules['security_group_rules'].append({
+                    'IpProtocol': parsed['protocol'],
+                    'FromPort': port,
+                    'ToPort': port,
+                    'IpRanges': [{
+                        'CidrIp': normalized_cidr,
+                        'Description': f'Rich rule: {parsed["protocol"]}/{port} from {normalized_cidr}'
+                    }]
+                })
+                
+                print(f" Added single port rule: {port} from {normalized_cidr}")
+            
+            # Show normalization if changed
             if 'original_source' in parsed and parsed['original_source'] != normalized_cidr:
-                print(f"Normalized {parsed['original_source']} → {normalized_cidr}")
+                print(f" Normalized {parsed['original_source']} → {normalized_cidr}")
     
-    # Add service rules (skip if covered by rich rules)
+    # Add service rules
     for service in services:
         if service in service_port_map:
             port = service_port_map[service]['port']
             protocol = service_port_map[service]['protocol']
             
+            
             if (port, protocol) in rich_rule_ports:
-                print(f"Skipping service '{service}' - covered by rich rule")
+                print(f" Skipping service '{service}' - covered by rich rule")
                 continue
             
             rules['security_group_rules'].append({
@@ -130,8 +170,9 @@ def get_firewall_rules():
         port_num, protocol = port.split('/')
         port_num = int(port_num)
         
+        
         if (port_num, protocol) in rich_rule_ports:
-            print(f"Skipping port '{port}' - covered by rich rule")
+            print(f" Skipping port '{port}' - covered by rich rule")
             continue
         
         rules['security_group_rules'].append({
@@ -168,7 +209,7 @@ if __name__ == '__main__':
         os.makedirs(output_dir, exist_ok=True)
         if os.environ.get('SUDO_USER'):
             os.chown(output_dir, uid, gid)
-        print(f"Created directory: {output_dir}")
+        print(f" Created directory: {output_dir}")
     
     output_file = os.path.join(output_dir, 'firewall_rules.json')
     
@@ -177,7 +218,7 @@ if __name__ == '__main__':
     
     if os.environ.get('SUDO_USER'):
         os.chown(output_file, uid, gid)
-        print(f"File ownership set to: {real_user}")
+        print(f" File ownership set to: {real_user}")
     
     print(f"\n Rules saved to: {output_file}")
     print(f" Total rules: {len(rules['security_group_rules'])}")
