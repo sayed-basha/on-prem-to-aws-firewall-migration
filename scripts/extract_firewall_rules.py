@@ -97,7 +97,7 @@ def get_firewall_rules():
                 'ToPort': parsed['port'],
                 'IpRanges': [{
                     'CidrIp': normalized_cidr,  # ← Normalized CIDR
-                    'Description': f'Rich rule: {parsed["protocol"]}/{parsed["port"]} from {normalized_cidr}'  # ← Use normalized in description too
+                    'Description': f'Rich rule: {parsed["protocol"]}/{parsed["port"]} from {normalized_cidr}'
                 }]
             })
             
@@ -150,7 +150,7 @@ if __name__ == '__main__':
     rules = get_firewall_rules()
     print(json.dumps(rules, indent=2))
     
-    OUTPUT_DIR = '/home/basha/FW-duplicate-learn'
+    OUTPUT_DIR = '/home/$USER/FW-duplicate'
     
     if os.environ.get('SUDO_USER'):
         real_user = os.environ['SUDO_USER']
