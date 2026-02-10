@@ -17,7 +17,8 @@ This project automates the migration of firewall rules from on-premises servers 
 
 ##  Architecture
 
-<img width="1038" height="1546" alt="FW-MGN" src="https://github.com/user-attachments/assets/369b1aba-2d2f-407a-9d46-070926134e18" />
+<img width="1306" height="1622" alt="FW-MGN-diagram" src="https://github.com/user-attachments/assets/996bf53b-fece-4e1f-bd81-f03be4d11aef" />
+
 
 
 ##  Prerequisites
