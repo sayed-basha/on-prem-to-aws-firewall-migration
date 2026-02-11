@@ -1,5 +1,5 @@
 {
-  "Comment": "Fedora Firewall to AWS Security Group Migration",
+  "Comment": "Firewalld Firewall to AWS Security Group Migration",
   "StartAt": "CreateSecurityGroup",
   "States": {
     "CreateSecurityGroup": {

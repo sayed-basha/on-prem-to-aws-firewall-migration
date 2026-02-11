@@ -62,13 +62,13 @@ def lambda_handler(event, context):
         
         # Create unique security group name
         timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-        sg_name = f'fedora-migrated-sg-{timestamp}'
+        sg_name = f'firewalld-migrated-sg-{timestamp}'
         
         # Create Security Group
         print(f"Creating security group: {sg_name}")
         response = ec2.create_security_group(
             GroupName=sg_name,
-            Description='Security group migrated from Fedora firewall',
+            Description='Security group migrated from Firewalld firewall',
             VpcId=vpc_id
         )
         
@@ -79,8 +79,8 @@ def lambda_handler(event, context):
         ec2.create_tags(
             Resources=[sg_id],
             Tags=[
-                {'Key': 'Name', 'Value': 'Fedora-Migrated-SG'},
-                {'Key': 'Source', 'Value': 'Fedora-Firewall'},
+                {'Key': 'Name', 'Value': 'Firewalld-Migrated-SG'},
+                {'Key': 'Source', 'Value': 'Firewalld-Firewall'},
                 {'Key': 'MigrationDate', 'Value': timestamp}
             ]
         )
