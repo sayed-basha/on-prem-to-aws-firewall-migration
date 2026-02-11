@@ -119,4 +119,13 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - Built as a learning project to understand enterprise cloud migration patterns
 - Inspired by real-world firewall migration scenarios
 
+##  Future Enhancements
+
+- [ ] Cisco ASA support
+- [ ] FortiGate support
+- [ ] Palo Alto Networks support
+- [ ] iptables support
+- [ ] pfSense support
+- [ ] Juniper SRX support
+
 ** If you find this project helpful, please give it a star!**
