@@ -191,7 +191,7 @@ if __name__ == '__main__':
     rules = get_firewall_rules()
     print(json.dumps(rules, indent=2))
     
-    OUTPUT_DIR = '/home/$USER/FW-duplicate'
+    OUTPUT_DIR = '~/on-prem-to-aws-firewall-migration/examples/'
     
     if os.environ.get('SUDO_USER'):
         real_user = os.environ['SUDO_USER']

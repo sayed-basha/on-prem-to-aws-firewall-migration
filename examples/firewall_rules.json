@@ -1,18 +1,13 @@
 {
   "services": [
     "dhcpv6-client",
-    "http",
-    "https",
+    "mdns",
     "ssh"
   ],
   "ports": [
-    "8080/tcp",
-    "3306/tcp"
+    "8200/tcp"
   ],
-  "rich_rules": [
-    "rule family=\"ipv4\" source address=\"10.0.0.100/32\" port port=\"22\" protocol=\"tcp\" accept",
-    "rule family=\"ipv4\" source address=\"10.0.1.0/24\" port port=\"3306\" protocol=\"tcp\" accept"
-  ],
+  "rich_rules": [],
   "security_group_rules": [
     {
       "IpProtocol": "tcp",
@@ -20,52 +15,19 @@
       "ToPort": 22,
       "IpRanges": [
         {
-          "CidrIp": "10.0.0.100/32",
-          "Description": "Rich rule: tcp/22 from 10.0.0.100/32"
+          "CidrIp": "0.0.0.0/0",
+          "Description": "Rule for ssh"
         }
       ]
     },
     {
       "IpProtocol": "tcp",
-      "FromPort": 3306,
-      "ToPort": 3306,
-      "IpRanges": [
-        {
-          "CidrIp": "10.0.1.0/24",
-          "Description": "Rich rule: tcp/3306 from 10.0.1.0/24"
-        }
-      ]
-    },
-    {
-      "IpProtocol": "tcp",
-      "FromPort": 80,
-      "ToPort": 80,
+      "FromPort": 8200,
+      "ToPort": 8200,
       "IpRanges": [
         {
           "CidrIp": "0.0.0.0/0",
-          "Description": "Rule for http"
-        }
-      ]
-    },
-    {
-      "IpProtocol": "tcp",
-      "FromPort": 443,
-      "ToPort": 443,
-      "IpRanges": [
-        {
-          "CidrIp": "0.0.0.0/0",
-          "Description": "Rule for https"
-        }
-      ]
-    },
-    {
-      "IpProtocol": "tcp",
-      "FromPort": 8080,
-      "ToPort": 8080,
-      "IpRanges": [
-        {
-          "CidrIp": "0.0.0.0/0",
-          "Description": "Custom port 8080/tcp"
+          "Description": "Custom port 8200/tcp"
         }
       ]
     }
